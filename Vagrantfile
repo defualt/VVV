@@ -5,6 +5,17 @@ vagrant_dir = File.expand_path(File.dirname(__FILE__))
 
 Vagrant.configure("2") do |config|
 
+  # Install vagrant plugins specified in the VVV installation instructions
+  required_plugins = %w(vagrant-hostsupdater vagrant-triggers)
+  required_plugins.each do |plugin|
+    need_restart = false
+    unless Vagrant.has_plugin? plugin
+      system "vagrant plugin install #{plugin}"
+      need_restart = true
+    end
+    exec "vagrant #{ARGV.join(' ')}" if need_restart
+  end
+
   # Store the current version of Vagrant for use in conditionals when dealing
   # with possible backward compatible issues.
   vagrant_version = Vagrant::VERSION.sub(/^v/, '')
@@ -251,5 +262,14 @@ Vagrant.configure("2") do |config|
     config.trigger.before :destroy, :stdout => true do
       run "vagrant ssh -c 'vagrant_destroy'"
     end
+    config.trigger.before :provision, :stdout => true do
+      run "touch /Users/brianephraim/Sites/vvv-wordpress/qwer"
+      run "bash Vagrantfile-provision-post.sh"
+    end
+    config.trigger.before :up, :stdout => true do
+      run "echo 'config.trigger.before'"
+    end
   end
+
+
 end
